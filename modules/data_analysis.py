@@ -28,7 +28,6 @@ def render_data_analysis_page():
         # Option to upload new data using button and session state
         if st.button("Upload Different Data"):
             del st.session_state['data']
-<<<<<<< HEAD
             st.rerun()  # Using st.rerun() instead of experimental_rerun
     else:
         st.markdown("Upload your data and get instant insights")
@@ -69,9 +68,6 @@ def render_data_analysis_page():
                 }
             )
             return
-=======
-            st.rerun()
->>>>>>> c76e4660b1221a31b1cd0ef4b6376b3a615535fe
             
     # Only proceed with analysis if we have data
     if 'data' in st.session_state:
@@ -185,50 +181,4 @@ def render_data_analysis_page():
             if len(numeric_cols) > 1:
                 display_correlation_analysis(df, numeric_cols)
             else:
-<<<<<<< HEAD
                 st.warning("Need at least 2 numerical columns for correlation analysis")
-=======
-                st.warning("Need at least 2 numerical columns for correlation analysis")
-                
-    else:
-        st.markdown("Upload your data and get instant insights")
-        
-        # File uploader with modern styling
-        uploaded_file = st.file_uploader(
-            "Drop your CSV file here or click to upload",
-            type="csv",
-            help="Upload a CSV file to begin analysis"
-        )
-        
-        if uploaded_file is not None:
-            try:
-                # Load and store data
-                df = pd.read_csv(uploaded_file)
-                st.session_state['data'] = df
-                st.success("✅ Data uploaded successfully!")
-                st.experimental_rerun()  # Rerun to show analysis options
-                
-            except Exception as e:
-                st.error(f"Error loading data: {str(e)}")
-                st.write("Please check your data format and try again.")
-        else:
-            # Show sample data format
-            st.info("👆 Please upload a CSV file to begin analysis.")
-            
-            st.markdown("### 📋 Sample Data Format")
-            sample_df = pd.DataFrame({
-                'date': ['2024-01-01', '2024-01-02'],
-                'value': [100, 150],
-                'category': ['A', 'B']
-            })
-            
-            st.dataframe(
-                sample_df,
-                use_container_width=True,
-                column_config={
-                    "date": "Date",
-                    "value": "Numeric Value",
-                    "category": "Category"
-                }
-            )
->>>>>>> c76e4660b1221a31b1cd0ef4b6376b3a615535fe
