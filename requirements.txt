@@ -1,0 +1,13 @@
+--index-url https://pypi.org/simple
+--only-binary :all:
+
+streamlit
+numpy>=1.24.3
+pandas>=1.5.3
+scikit-learn>=1.2.2
+plotly>=5.15.0
+statsmodels>=0.14.0
+joblib>=1.2.0
+seaborn>=0.12.2
+matplotlib>=3.7.1
+XlsxWriter
