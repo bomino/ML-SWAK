@@ -151,19 +151,71 @@ def render_data_analysis_page():
                             selected_cat_col=selected_cat_col
                         )
                         
-            elif analysis_type == "Temporal Analysis" and datetime_cols:
-                selected_date_col = st.selectbox(
-                    "Select datetime column",
-                    datetime_cols,
-                    key="temporal_analysis_col"
-                )
+            elif analysis_type == "Temporal Analysis":
+                # Try to identify potential date columns
+                potential_date_cols = []
                 
-                # Convert to datetime if not already
-                df[selected_date_col] = pd.to_datetime(df[selected_date_col])
-                analyze_temporal_data(df, selected_date_col, numeric_cols)
+                # Check existing datetime columns
+                datetime_cols = df.select_dtypes(include=['datetime64']).columns.tolist()
+                potential_date_cols.extend(datetime_cols)
                 
-            else:
-                st.warning("No appropriate columns found for the selected analysis type")
+                # Check object/string columns that might be dates
+                for col in df.select_dtypes(include=['object']).columns:
+                    # Sample the first non-null value
+                    sample = df[col].dropna().iloc[0] if not df[col].dropna().empty else None
+                    if sample and isinstance(sample, str):
+                        try:
+                            pd.to_datetime(sample)
+                            potential_date_cols.append(col)
+                        except:
+                            continue
+                
+                if potential_date_cols:
+                    selected_date_col = st.selectbox(
+                        "Select datetime column",
+                        potential_date_cols,
+                        key="temporal_analysis_col"
+                    )
+                    
+                    try:
+                        # Convert to datetime
+                        df[selected_date_col] = pd.to_datetime(df[selected_date_col])
+                        
+                        col1, col2 = st.columns(2)
+                        with col1:
+                            st.metric(
+                                "Date Range",
+                                f"{df[selected_date_col].min().strftime('%Y-%m-%d')} to {df[selected_date_col].max().strftime('%Y-%m-%d')}"
+                            )
+                            st.metric(
+                                "Time Span",
+                                f"{(df[selected_date_col].max() - df[selected_date_col].min()).days} days"
+                            )
+                        
+                        with col2:
+                            if numeric_cols:
+                                selected_value_col = st.selectbox(
+                                    "Select value column for time series",
+                                    numeric_cols,
+                                    key="temporal_value_col"
+                                )
+                                fig = px.line(
+                                    df, 
+                                    x=selected_date_col, 
+                                    y=selected_value_col,
+                                    title=f'{selected_value_col} over Time',
+                                    template="plotly_white"
+                                )
+                                st.plotly_chart(fig, use_container_width=True)
+                            else:
+                                st.warning("No numeric columns available for time series plotting")
+                                
+                    except Exception as e:
+                        st.error(f"Error processing date column: {str(e)}")
+                        st.info("Try selecting a different column or check the date format")
+                else:
+                    st.warning("No date/time columns found. Please ensure your dataset includes a column with dates.")
+                    st.info("Date columns should contain values like 'YYYY-MM-DD' or other standard date formats.")
         
         # Advanced Analysis Tab
         with tabs[1]:
