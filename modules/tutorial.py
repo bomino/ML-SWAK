@@ -706,8 +706,39 @@ def format_metric(value, format_type="number"):
         return f"{value:.1f}%"
     return str(value)
 
+def render_section_map(sections, current_section):
+    """Render a more compact visual representation of the learning path"""
+    st.markdown("#### 🗺️ Your Learning Path")
+    
+    map_container = st.container()
+    
+    with map_container:
+        for i, (section, details) in enumerate(sections.items()):
+            # Determine status icon and create compact display
+            status = "✅ " if section in st.session_state.completed_sections else "⚪️ " if section != current_section else "🔵 "
+            
+            # Use markdown for more compact rendering
+            if section == current_section:
+                st.markdown(f"{status}**{details['icon']} {section}**")
+            else:
+                st.markdown(f"{status}{details['icon']} {section}")
+            
+            # Add smaller connecting line except for last item
+            if i < len(sections) - 1:
+                st.markdown("<div style='margin-top: -15px; margin-bottom: -15px; margin-left: 10px; color: #CCCCCC;'>│</div>", unsafe_allow_html=True)
+
 def render_tutorial_page():
     """Main function to render the tutorial page"""
+    # Initialize session states
+    if 'current_tutorial_section' not in st.session_state:
+        st.session_state['current_tutorial_section'] = "Introduction"
+    
+    if 'nav_clicked' not in st.session_state:
+        st.session_state.nav_clicked = False
+        
+    if 'completed_sections' not in st.session_state:
+        st.session_state.completed_sections = set()
+
     st.title("📚 Model Training Tutorial")
     
     # Section definitions with icons and descriptions
@@ -763,48 +794,120 @@ def render_tutorial_page():
             "description": "Useful utilities and functions"
         }
     }
-    
-    # Section selection
-    col1, col2 = st.columns([2, 1])
-    with col1:
-        current_section = st.selectbox(
-            "Select Tutorial Section",
-            options=list(sections.keys()),
-            format_func=lambda x: f"{sections[x]['icon']} {x}"
-        )
-    
-    with col2:
-        st.info(sections[current_section]['description'])
-    
-    # Visual separator
-    st.markdown("---")
-    
-    # Render selected section
-    sections[current_section]['render']()
-    
-    # Navigation arrows
-    st.markdown("---")
-    col1, col2, col3 = st.columns([1, 2, 1])
-    
+
     section_list = list(sections.keys())
-    current_index = section_list.index(current_section)
-    
-    with col1:
+    current_index = section_list.index(st.session_state['current_tutorial_section'])
+
+    # Define navigation callback functions
+    def nav_prev():
         if current_index > 0:
-            prev_section = section_list[current_index - 1]
-            if st.button(f"← {sections[prev_section]['icon']} Previous"):
-                st.session_state['current_tutorial_section'] = prev_section
-                st.rerun()
-    
-    with col3:
+            st.session_state['current_tutorial_section'] = section_list[current_index - 1]
+
+    def nav_next():
         if current_index < len(section_list) - 1:
-            next_section = section_list[current_index + 1]
-            if st.button(f"Next {sections[next_section]['icon']} →"):
-                st.session_state['current_tutorial_section'] = next_section
-                st.rerun()
+            st.session_state['current_tutorial_section'] = section_list[current_index + 1]
+
+    # Create two columns for main content and section map
+    main_col, map_col = st.columns([2, 1])
     
-    # Help section in sidebar
+    with main_col:
+        # Section selection
+        col1, col2 = st.columns([2, 1])
+        with col1:
+            current_section = st.selectbox(
+                "Select Tutorial Section",
+                options=section_list,
+                format_func=lambda x: f"{sections[x]['icon']} {x}",
+                key="tutorial_section",
+                index=current_index
+            )
+            
+            if current_section != st.session_state['current_tutorial_section']:
+                st.session_state['current_tutorial_section'] = current_section
+        
+        with col2:
+            st.info(sections[current_section]['description'])
+        
+        # Add search functionality
+        search_term = st.text_input("🔍 Search within tutorial", key="search_box")
+        if search_term:
+            matches = []
+            for section, content in sections.items():
+                if search_term.lower() in section.lower() or search_term.lower() in content["description"].lower():
+                    matches.append(f"{content['icon']} {section}")
+            if matches:
+                st.success(f"Found in sections: {', '.join(matches)}")
+            else:
+                st.warning("No matches found")
+                
+        # Progress tracking
+        progress = len(st.session_state.completed_sections) / len(sections)
+        st.progress(progress)
+        st.write(f"📊 Progress: {len(st.session_state.completed_sections)} of {len(sections)} sections completed")
+
+        # Visual separator
+        st.markdown("---")
+
+        # Render selected section
+        sections[current_section]['render']()
+        
+        # Add completion button after content
+        col1, col2, col3 = st.columns([1, 2, 1])
+        with col2:
+            if current_section not in st.session_state.completed_sections:
+                if st.button("✅ Mark as Complete", use_container_width=True):
+                    st.session_state.completed_sections.add(current_section)
+                    st.success(f"Section '{current_section}' marked as complete!")
+                    st.rerun()
+            else:
+                if st.button("↩️ Mark as Incomplete", use_container_width=True):
+                    st.session_state.completed_sections.remove(current_section)
+                    st.info(f"Section '{current_section}' marked as incomplete.")
+                    st.rerun()
+
+        # Navigation arrows
+        st.markdown("---")
+        col1, col2, col3 = st.columns([1, 2, 1])
+
+        with col1:
+            if current_index > 0:
+                prev_section = section_list[current_index - 1]
+                st.button(
+                    f"← {sections[prev_section]['icon']} Previous",
+                    on_click=nav_prev,
+                    key="prev_button"
+                )
+
+        with col3:
+            if current_index < len(section_list) - 1:
+                next_section = section_list[current_index + 1]
+                st.button(
+                    f"Next {sections[next_section]['icon']} →",
+                    on_click=nav_next,
+                    key="next_button"
+                )
+
+    with map_col:
+        # Render the section map in the right column
+        with st.container():
+            render_section_map(sections, current_section)
+
+    # Quick Navigation Sidebar
     with st.sidebar:
+        st.markdown("### 🗺️ Quick Jump")
+        for section in sections:
+            # Show completion status in the button
+            icon = "✅" if section in st.session_state.completed_sections else sections[section]["icon"]
+            if st.button(
+                f"{icon} {section}",
+                key=f"nav_{section}",
+                use_container_width=True,
+                type="secondary" if section == current_section else "primary"
+            ):
+                st.session_state['current_tutorial_section'] = section
+                st.rerun()
+
+        st.markdown("---")  # Add separator
         with st.expander("📞 Need Help?", expanded=False):
             st.info("""
             If you need assistance:
