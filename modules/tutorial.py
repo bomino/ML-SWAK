@@ -282,7 +282,7 @@ def render_model_selection():
     - Good with categorical features
     """)
     
-    # Model Selection Helper
+# Model Selection Helper
     st.markdown("### 🤖 Model Selection Helper")
     col1, col2 = st.columns(2)
     
@@ -309,28 +309,131 @@ def render_model_selection():
              "Model interpretability"]
         )
     
-    # Show recommendation based on selections
+    # Show comprehensive recommendation based on all selections
     st.subheader("Recommended Model")
-    if data_size == "Small (< 1000 rows)":
-        if priority == "Accuracy":
-            st.success("➡️ Try Random Forest or XGBoost")
-            st.info("💡 Good for small datasets with complex patterns")
-        elif priority == "Training speed":
-            st.success("➡️ Try Ridge Regression")
-            st.info("💡 Fast and efficient for small datasets")
-        else:  # interpretability
-            st.success("➡️ Try Lasso Regression")
-            st.info("💡 Provides feature selection and interpretability")
-    elif data_size == "Large (> 10000 rows)":
-        if priority == "Accuracy":
-            st.success("➡️ Try LightGBM or XGBoost")
-            st.info("💡 Highly efficient for large datasets")
-        elif priority == "Training speed":
-            st.success("➡️ Try LightGBM")
-            st.info("💡 Faster training on large datasets")
-        else:  # interpretability
-            st.success("➡️ Try Random Forest")
-            st.info("💡 Good balance of performance and interpretability")
+    
+    # Define recommendations based on all criteria combinations
+    recommendations = {
+        # Small dataset recommendations
+        ("Small (< 1000 rows)", "Mostly numeric", "Accuracy"): {
+            "model": "Random Forest or XGBoost",
+            "reason": "Good for capturing complex patterns in small numeric datasets"
+        },
+        ("Small (< 1000 rows)", "Mostly numeric", "Training speed"): {
+            "model": "Ridge Regression",
+            "reason": "Fast and efficient for small numeric datasets"
+        },
+        ("Small (< 1000 rows)", "Mostly numeric", "Model interpretability"): {
+            "model": "Lasso Regression",
+            "reason": "Provides feature selection and clear coefficient interpretation"
+        },
+        ("Small (< 1000 rows)", "Mostly categorical", "Accuracy"): {
+            "model": "Random Forest",
+            "reason": "Handles categorical data well with good accuracy"
+        },
+        ("Small (< 1000 rows)", "Mostly categorical", "Training speed"): {
+            "model": "Decision Tree",
+            "reason": "Quick to train and naturally handles categories"
+        },
+        ("Small (< 1000 rows)", "Mostly categorical", "Model interpretability"): {
+            "model": "Decision Tree",
+            "reason": "Provides clear decision paths and rules"
+        },
+        ("Small (< 1000 rows)", "Mixed", "Accuracy"): {
+            "model": "Random Forest or XGBoost",
+            "reason": "Handles mixed data types well with good accuracy"
+        },
+        ("Small (< 1000 rows)", "Mixed", "Training speed"): {
+            "model": "Decision Tree",
+            "reason": "Fast training with natural handling of mixed types"
+        },
+        ("Small (< 1000 rows)", "Mixed", "Model interpretability"): {
+            "model": "Decision Tree",
+            "reason": "Clear decision paths for both numeric and categorical features"
+        },
+        
+        # Medium dataset recommendations
+        ("Medium (1000-10000 rows)", "Mostly numeric", "Accuracy"): {
+            "model": "XGBoost",
+            "reason": "Excellent performance on medium-sized numeric data"
+        },
+        ("Medium (1000-10000 rows)", "Mostly numeric", "Training speed"): {
+            "model": "LightGBM",
+            "reason": "Faster training while maintaining good performance"
+        },
+        ("Medium (1000-10000 rows)", "Mostly numeric", "Model interpretability"): {
+            "model": "Random Forest",
+            "reason": "Balance of performance and feature importance clarity"
+        },
+        ("Medium (1000-10000 rows)", "Mostly categorical", "Accuracy"): {
+            "model": "LightGBM",
+            "reason": "Efficient handling of categorical features with good accuracy"
+        },
+        ("Medium (1000-10000 rows)", "Mostly categorical", "Training speed"): {
+            "model": "LightGBM",
+            "reason": "Fast training with native categorical support"
+        },
+        ("Medium (1000-10000 rows)", "Mostly categorical", "Model interpretability"): {
+            "model": "Random Forest",
+            "reason": "Clear feature importance for categorical data"
+        },
+        ("Medium (1000-10000 rows)", "Mixed", "Accuracy"): {
+            "model": "XGBoost or LightGBM",
+            "reason": "Strong performance on mixed data types"
+        },
+        ("Medium (1000-10000 rows)", "Mixed", "Training speed"): {
+            "model": "LightGBM",
+            "reason": "Fast training with good handling of mixed types"
+        },
+        ("Medium (1000-10000 rows)", "Mixed", "Model interpretability"): {
+            "model": "Random Forest",
+            "reason": "Interpretable results for both numeric and categorical features"
+        },
+        
+        # Large dataset recommendations
+        ("Large (> 10000 rows)", "Mostly numeric", "Accuracy"): {
+            "model": "LightGBM or XGBoost",
+            "reason": "Highly efficient for large numeric datasets with top performance"
+        },
+        ("Large (> 10000 rows)", "Mostly numeric", "Training speed"): {
+            "model": "LightGBM",
+            "reason": "Fastest training on large numeric data"
+        },
+        ("Large (> 10000 rows)", "Mostly numeric", "Model interpretability"): {
+            "model": "Random Forest",
+            "reason": "Scalable with interpretable results"
+        },
+        ("Large (> 10000 rows)", "Mostly categorical", "Accuracy"): {
+            "model": "LightGBM",
+            "reason": "Best performance for large categorical data"
+        },
+        ("Large (> 10000 rows)", "Mostly categorical", "Training speed"): {
+            "model": "LightGBM",
+            "reason": "Optimized for large categorical datasets"
+        },
+        ("Large (> 10000 rows)", "Mostly categorical", "Model interpretability"): {
+            "model": "Random Forest",
+            "reason": "Maintainable interpretability at scale"
+        },
+        ("Large (> 10000 rows)", "Mixed", "Accuracy"): {
+            "model": "LightGBM",
+            "reason": "Best overall performance for large mixed datasets"
+        },
+        ("Large (> 10000 rows)", "Mixed", "Training speed"): {
+            "model": "LightGBM",
+            "reason": "Fastest training while handling mixed types well"
+        },
+        ("Large (> 10000 rows)", "Mixed", "Model interpretability"): {
+            "model": "Random Forest",
+            "reason": "Scalable interpretability for all feature types"
+        }
+    }
+    
+    # Get recommendation based on selections
+    recommendation = recommendations.get((data_size, feature_type, priority))
+    if recommendation:
+        st.success(f"➡️ Try {recommendation['model']}")
+        st.info(f"💡 Why? {recommendation['reason']}")
 
 def render_forecasting_models():
     """Render the forecasting models section"""
