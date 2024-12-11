@@ -898,14 +898,26 @@ def render_tutorial_page():
         for section in sections:
             # Show completion status in the button
             icon = "✅" if section in st.session_state.completed_sections else sections[section]["icon"]
-            if st.button(
-                f"{icon} {section}",
-                key=f"nav_{section}",
-                use_container_width=True,
-                type="secondary" if section == current_section else "primary"
-            ):
-                st.session_state['current_tutorial_section'] = section
-                st.rerun()
+            if section == current_section:
+                # Active section - primary button with color
+                if st.button(
+                    f"{icon} {section}",
+                    key=f"nav_{section}",
+                    use_container_width=True,
+                    type="primary"
+                ):
+                    st.session_state['current_tutorial_section'] = section
+                    st.rerun()
+            else:
+                # Inactive sections - secondary button without color
+                if st.button(
+                    f"{icon} {section}",
+                    key=f"nav_{section}",
+                    use_container_width=True,
+                    type="secondary"
+                ):
+                    st.session_state['current_tutorial_section'] = section
+                    st.rerun()
 
         st.markdown("---")  # Add separator
         with st.expander("📞 Need Help?", expanded=False):
