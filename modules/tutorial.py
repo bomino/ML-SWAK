@@ -627,9 +627,8 @@ def render_troubleshooting():
         st.markdown("""
         Need additional help? Contact our support team:
         
-        - Email: support@example.com
-        - Discord: [Join our community]
-        - GitHub: [Report issues]
+        - Email: Bomino@mlawali.com
+        - GitHub: [Report issues on our repository](https://github.com/bomino/ML-SWAK)
         """)
 
 
